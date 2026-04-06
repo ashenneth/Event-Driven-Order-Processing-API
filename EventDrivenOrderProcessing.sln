@@ -15,19 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{837B721B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderApi.Tests", "tests\OrderApi.Tests\OrderApi.Tests.csproj", "{EEE6F882-507C-4B43-BBB6-2A1CAE4C4F19}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Persistence", "Persistence", "{8859F012-6E80-4DB7-97C6-E306A4B545B7}"
-	ProjectSection(SolutionItems) = preProject
-		AppDbContext.cs = AppDbContext.cs
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Entities", "Entities", "{06714317-FA54-41E8-B2C9-9CAE9148CB0B}"
-	ProjectSection(SolutionItems) = preProject
-		InventoryItem.cs = InventoryItem.cs
-		Order.cs = Order.cs
-		OrderItem.cs = OrderItem.cs
-		OrderStatus.cs = OrderStatus.cs
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,8 +46,6 @@ Global
 		{2EECDE36-99E2-41F7-9A9F-8CFB34A5341E} = {654CFA64-7AF8-4154-AFC2-337951FF25ED}
 		{0CC6182D-7E6D-4AD8-9FE9-AB731AC2FA05} = {654CFA64-7AF8-4154-AFC2-337951FF25ED}
 		{EEE6F882-507C-4B43-BBB6-2A1CAE4C4F19} = {837B721B-AF4A-4BAB-95A2-87ECBEC00580}
-		{8859F012-6E80-4DB7-97C6-E306A4B545B7} = {654CFA64-7AF8-4154-AFC2-337951FF25ED}
-		{06714317-FA54-41E8-B2C9-9CAE9148CB0B} = {8859F012-6E80-4DB7-97C6-E306A4B545B7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9ACE5445-D88A-48B1-BB41-AB39C4A154BF}
