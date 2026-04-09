@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using OrderApi.Middleware;
 using OrderApi.Persistence;
+using OrderApi.Repositories;
+using OrderApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     var cs = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseSqlite(cs);
 });
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // Middleware DI
 builder.Services.AddTransient<CorrelationIdMiddleware>();
