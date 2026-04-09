@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using OrderApi.Middleware;
 using OrderApi.Persistence;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +14,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(cs);
 });
 
+// Middleware DI
+builder.Services.AddTransient<CorrelationIdMiddleware>();
+builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -23,6 +27,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+//middlewares
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseAuthorization();
 app.MapControllers();
 
