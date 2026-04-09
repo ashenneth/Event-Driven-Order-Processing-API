@@ -3,6 +3,8 @@ using OrderApi.Middleware;
 using OrderApi.Persistence;
 using OrderApi.Repositories;
 using OrderApi.Services;
+using Microsoft.Extensions.Options;
+using OrderApi.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,13 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection(ServiceBusOptions.SectionName));
+
+// Bind ConnectionString from config (user-secrets overrides in dev automatically)
+builder.Services.AddSingleton<IMessagePublisher, ServiceBusMessagePublisher>();
 
 // Middleware DI
 builder.Services.AddTransient<CorrelationIdMiddleware>();

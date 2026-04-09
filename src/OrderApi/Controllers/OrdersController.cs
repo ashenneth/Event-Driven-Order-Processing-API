@@ -1,6 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OrderApi.DTOs;
 using OrderApi.Services;
+using Microsoft.Extensions.Options;
+using OrderApi.Messaging;
+using Shared.Contracts;
+using OrderApi.Middleware;
+
 
 namespace OrderApi.Controllers;
 
@@ -9,10 +14,17 @@ namespace OrderApi.Controllers;
 public class OrdersController : ControllerBase
 {
     private readonly IOrderService _orders;
+    private readonly IMessagePublisher _publisher;
+    private readonly ServiceBusOptions _sb;
 
-    public OrdersController(IOrderService orders)
+    public OrdersController(
+    IOrderService orders,
+    IMessagePublisher publisher,
+    IOptions<ServiceBusOptions> sbOptions)
     {
         _orders = orders;
+        _publisher = publisher;
+        _sb = sbOptions.Value;
     }
 
     [HttpGet]
@@ -38,6 +50,21 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateOrderRequestDto request, CancellationToken ct)
     {
         var created = await _orders.CreateAsync(request, ct);
+
+        var correlationId = HttpContext.GetCorrelationId();
+
+        var evt = new OrderCreated(
+            OrderId: created.Id,
+            CustomerEmail: created.CustomerEmail,
+            TotalAmount: created.TotalAmount,
+            Items: created.Items.Select(i => new OrderCreatedItem(i.Sku, i.Quantity, i.UnitPrice)).ToList(),
+            CorrelationId: correlationId,
+            CreatedAtUtc: DateTime.UtcNow
+        );
+
+        // MessageId = OrderId => processor can idempotently ignore duplicates easily
+        await _publisher.PublishAsync(_sb.QueueName, evt, messageId: created.Id.ToString("N"), correlationId: correlationId, ct);
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 

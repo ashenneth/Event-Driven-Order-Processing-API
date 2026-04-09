@@ -1,1 +1,0 @@
-Event contracts live here (OrderCreated etc.)
