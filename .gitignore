@@ -482,3 +482,14 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# --- SQLite / local DB ---
+*.db
+*.db-wal
+*.db-shm
+
+# Local data folder
+data/
+
+# User secrets
+secrets.json

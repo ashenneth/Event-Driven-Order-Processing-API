@@ -27,7 +27,6 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection(ServiceBusOptions.SectionName));
 
-// Bind ConnectionString from config (user-secrets overrides in dev automatically)
 builder.Services.AddSingleton<IMessagePublisher, ServiceBusMessagePublisher>();
 
 // Middleware DI
