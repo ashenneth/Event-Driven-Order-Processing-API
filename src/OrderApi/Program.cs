@@ -5,8 +5,32 @@ using OrderApi.Repositories;
 using OrderApi.Services;
 using Microsoft.Extensions.Options;
 using OrderApi.Messaging;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
+using OpenTelemetry.Logs;
+using Shared.Observability;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
+var aiConn = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+// Enable Azure Monitor OpenTelemetry
+builder.Services.AddOpenTelemetry().UseAzureMonitor(o =>
+{
+    if (!string.IsNullOrWhiteSpace(aiConn))
+        o.ConnectionString = aiConn;
+
+});
+
+// Ensure service name is set (shows nicely in App Insights)
+builder.Services.ConfigureOpenTelemetryTracerProvider((sp, tp) =>
+{
+    tp.AddSource(Telemetry.ActivitySourceName)
+      .ConfigureResource(rb => rb.AddService("OrderApi"));
+});
+
+// Enable log scopes ? scope values become custom properties in App Insights logs :contentReference[oaicite:2]{index=2}
+builder.Services.Configure<OpenTelemetryLoggerOptions>(o => o.IncludeScopes = true);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

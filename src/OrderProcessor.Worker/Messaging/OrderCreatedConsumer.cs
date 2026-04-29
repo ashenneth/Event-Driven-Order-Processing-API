@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using OrderProcessor.Worker.Persistence;
 using OrderProcessor.Worker.Services;
 using Shared.Contracts;
+using System.Diagnostics;
 using Shared.Observability;
 
 namespace OrderProcessor.Worker.Messaging;
@@ -59,6 +60,18 @@ public sealed class OrderCreatedConsumer : BackgroundService
             !string.IsNullOrWhiteSpace(msg.CorrelationId) ? msg.CorrelationId :
             msg.ApplicationProperties.TryGetValue(Correlation.PropertyName, out var v) ? v?.ToString() ?? "" : "";
 
+        ActivityContext parentContext = default;
+
+        if (msg.ApplicationProperties.TryGetValue(Telemetry.TraceParent, out var tpObj) &&
+            tpObj is string traceParent &&
+            ActivityContext.TryParse(traceParent,
+                msg.ApplicationProperties.TryGetValue(Telemetry.TraceState, out var tsObj) ? tsObj?.ToString() : null,
+                out var parsed))
+        {
+            parentContext = parsed;
+        }
+
+
         using var scope = _logger.BeginScope(new Dictionary<string, object?>
         {
             ["MessageId"] = msg.MessageId,
@@ -66,6 +79,15 @@ public sealed class OrderCreatedConsumer : BackgroundService
             ["Subject"] = msg.Subject
         });
 
+        using var activity = parentContext != default
+            ? Telemetry.ActivitySource.StartActivity("sb.consume", ActivityKind.Consumer, parentContext)
+            : Telemetry.ActivitySource.StartActivity("sb.consume", ActivityKind.Consumer);
+
+        activity?.SetTag("messaging.system", "azure.servicebus");
+        activity?.SetTag("messaging.destination", _options.QueueName);
+        activity?.SetTag("messaging.destination_kind", "queue");
+        activity?.SetTag("messaging.operation", "process");
+        activity?.SetTag("messaging.message_id", msg.MessageId);
         try
         {
             if (msg.DeliveryCount >= _options.MaxDeliveryAttempts)

@@ -1,5 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 using Shared.Observability;
 
 namespace OrderApi.Messaging;
@@ -39,6 +40,13 @@ public sealed class ServiceBusMessagePublisher : IMessagePublisher
         string correlationId,
         CancellationToken ct)
     {
+        using var activity = Telemetry.ActivitySource.StartActivity("sb.publish", ActivityKind.Producer);
+
+        activity?.SetTag("messaging.system", "azure.servicebus");
+        activity?.SetTag("messaging.destination", queueName);
+        activity?.SetTag("messaging.destination_kind", "queue");
+        activity?.SetTag("messaging.operation", "publish");
+
         var sender = _client.CreateSender(queueName);
 
         // Serialize with shared options so API + Worker agree
@@ -51,6 +59,15 @@ public sealed class ServiceBusMessagePublisher : IMessagePublisher
             ContentType = "application/json",
             Subject = typeof(T).Name
         };
+
+        var current = Activity.Current;
+        if (current is not null)
+        {
+            msg.ApplicationProperties[Telemetry.TraceParent] = current.Id; // W3C id
+            if (!string.IsNullOrWhiteSpace(current.TraceStateString))
+                msg.ApplicationProperties[Telemetry.TraceState] = current.TraceStateString;
+        }
+
 
         msg.ApplicationProperties[Correlation.PropertyName] = correlationId;
 
